@@ -6,6 +6,18 @@
 
 This project is being developed as a fun experiment in building a RESTful web application using C.
 
+## Features
+
+- 🚀 **Fast** (compare?)
+- ✨ **lightweight** (compare?)
+- Simple **Router** with middleware 
+- **PostgreSQL** client
+- **Asynchronous** I/O with libuv
+- **Feature-Based** logging
+- **Tests** with cmocka
+- Benchmarks, Docker scratch image, gihub actions ..
+ 
+
 ## Dependencies
 
 - **HTTP Parser**: [picohttpparser](https://github.com/h2o/picohttpparser)

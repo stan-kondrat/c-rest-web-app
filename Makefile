@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g
 BUILDDIR = build
 
-SOURCES = database http router server foo app_users
+SOURCES = logging database http router server foo app_users
 LIBS_LOCAL = parson picohttpparser
 OBJECTS = $(addprefix build/, $(addsuffix .o, $(LIBS_LOCAL))) $(addprefix build/, $(addsuffix .o, $(SOURCES)))
 TESTS = test_router

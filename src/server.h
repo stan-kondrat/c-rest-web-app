@@ -7,4 +7,6 @@
 
 int server(Router *routers);
 
+int server_interfaces_print();
+
 #endif // SERVER_H
