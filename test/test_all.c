@@ -1,7 +1,9 @@
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <setjmp.h>
+
 #include <cmocka.h>
+
 #include "router.h"
 #include "test_router.c"
 
@@ -13,6 +15,6 @@ static const struct CMUnitTest tests[] = {
 };
 
 // Main function to run the tests
-int main(void) { 
-    return cmocka_run_group_tests(tests, NULL, NULL); 
+int main(void) {
+    return cmocka_run_group_tests(tests, NULL, NULL);
 }

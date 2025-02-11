@@ -1,14 +1,15 @@
+#include <setjmp.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <setjmp.h>
+
 #include <cmocka.h>
+
 #include "router.h"
 
-static void test_router_structure(void **state) __attribute__((unused));
-static void test_router_find(void **state) __attribute__((unused));
-static void test_router_middleware(void **state) __attribute__((unused));
-
+static void test_router_structure(void** state) __attribute__((unused));
+static void test_router_find(void** state) __attribute__((unused));
+static void test_router_middleware(void** state) __attribute__((unused));
 
 void test_router_func1(Request* request, Response* response) {
     check_expected(request->body);
@@ -25,42 +26,46 @@ void test_router_func3(Request* request, Response* response) {
     check_expected(response->body);
 }
 
-static void test_router_structure(void **state) {
-    (void)state; 
+static void test_router_structure(void** state) {
+    (void) state;
 
     // GIVEN
     Router routers[] = {
-        {HTTP_METHOD_GET,  "/index", .function = test_router_func1},
-        {HTTP_METHOD_GET, "/items", .routers = (Router[]) {
-            {HTTP_METHOD_GET,  "/list", .function = test_router_func2},
-            {HTTP_METHOD_POST,  "/add", .function = test_router_func2},
-            {.end = true},
-        }},
+        {HTTP_METHOD_GET, "/index", .function = test_router_func1},
+        {HTTP_METHOD_GET, "/items",
+         .routers =
+             (Router[]){
+                 {HTTP_METHOD_GET, "/list", .function = test_router_func2},
+                 {HTTP_METHOD_POST, "/add", .function = test_router_func2},
+                 {.end = true},
+             }},
         {.end = true},
     };
 
     // WHEN
 
     // THEN
-    assert_string_equal(routers[0].path, "/index"); 
-    assert_string_equal(routers[1].path, "/items"); 
-    assert_string_equal(routers[1].routers[0].path, "/list"); 
-    assert_string_equal(routers[1].routers[1].path, "/add"); 
-    assert_int_equal(routers[0].method, HTTP_METHOD_GET); 
-    assert_int_equal(routers[1].routers[1].method, HTTP_METHOD_POST); 
+    assert_string_equal(routers[0].path, "/index");
+    assert_string_equal(routers[1].path, "/items");
+    assert_string_equal(routers[1].routers[0].path, "/list");
+    assert_string_equal(routers[1].routers[1].path, "/add");
+    assert_int_equal(routers[0].method, HTTP_METHOD_GET);
+    assert_int_equal(routers[1].routers[1].method, HTTP_METHOD_POST);
 }
 
-static void test_router_find(void **state) {
-    (void)state; 
+static void test_router_find(void** state) {
+    (void) state;
 
     // GIVEN
     Router routers[] = {
-        {HTTP_METHOD_GET,  "/index", .function = test_router_func1},
-        {HTTP_METHOD_GET, "/items", .routers = (Router[]) {
-            {HTTP_METHOD_GET,  "/list", .function = test_router_func2},
-            {HTTP_METHOD_POST,  "/add", .function = test_router_func2},
-            {.end = true},
-        }},
+        {HTTP_METHOD_GET, "/index", .function = test_router_func1},
+        {HTTP_METHOD_GET, "/items",
+         .routers =
+             (Router[]){
+                 {HTTP_METHOD_GET, "/list", .function = test_router_func2},
+                 {HTTP_METHOD_POST, "/add", .function = test_router_func2},
+                 {.end = true},
+             }},
         {.end = true},
     };
 
@@ -81,26 +86,30 @@ static void test_router_find(void **state) {
     assert_ptr_equal(found_nested, test_router_func2);
 }
 
-static void test_router_middleware(void **state) {
-    (void)state; 
+static void test_router_middleware(void** state) {
+    (void) state;
 
-        // GIVEN
-        Router routers[] = {
-            {HTTP_METHOD_GET, "/parent", .function = test_router_func1, .routers = (Router[]) {
-                {HTTP_METHOD_GET,  "/child", .function = test_router_func2},
-                {.end = true},
-            }},
-            {HTTP_METHOD_GET, "/a", .function = test_router_func1, .routers = (Router[]) {
-                {HTTP_METHOD_GET,  "/b", .function = test_router_func2},
-                {HTTP_METHOD_GET,  "/c", .function = test_router_func3},
-                {.end = true},
-            }},
-            {.end = true},
-        };
+    // GIVEN
+    Router routers[] = {
+        {HTTP_METHOD_GET, "/parent", .function = test_router_func1,
+         .routers =
+             (Router[]){
+                 {HTTP_METHOD_GET, "/child", .function = test_router_func2},
+                 {.end = true},
+             }},
+        {HTTP_METHOD_GET, "/a", .function = test_router_func1,
+         .routers =
+             (Router[]){
+                 {HTTP_METHOD_GET, "/b", .function = test_router_func2},
+                 {HTTP_METHOD_GET, "/c", .function = test_router_func3},
+                 {.end = true},
+             }},
+        {.end = true},
+    };
 
-        // WHEN
-        RouterFunction func = router_find(routers, "GET", "/a/c");
+    // WHEN
+    RouterFunction func = router_find(routers, "GET", "/a/c");
 
-        // THEN
-        assert_ptr_equal(func, test_router_func3);
+    // THEN
+    assert_ptr_equal(func, test_router_func3);
 }

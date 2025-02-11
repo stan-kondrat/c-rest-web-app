@@ -1,0 +1,22 @@
+# .clang-format
+
+# Use LLVM style as the base.
+BasedOnStyle: LLVM
+
+# Indentation settings
+IndentWidth: 4
+TabWidth: 4             
+UseTab: Never           
+
+# Formatting settings
+ColumnLimit: 80         
+AllowAllArgumentsOnNextLine: true
+AllowShortFunctionsOnASingleLine: None
+
+# Control formatting of spaces
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpaceAfterCStyleCast: true
+
+# Code-specific settings
+PointerAlignment: Left    

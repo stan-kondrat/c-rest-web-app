@@ -4,8 +4,7 @@
 #include "http.h"
 #include "router.h"
 
-
-int server(Router *routers);
+int server(Router* routers);
 
 int server_interfaces_print();
 

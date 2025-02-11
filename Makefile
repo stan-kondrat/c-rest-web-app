@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g
 BUILDDIR = build
 
-SOURCES = logging database http router server foo app_users
+SOURCES = logging database http router server app_users
 LIBS_LOCAL = parson picohttpparser
 OBJECTS = $(addprefix build/, $(addsuffix .o, $(LIBS_LOCAL))) $(addprefix build/, $(addsuffix .o, $(SOURCES)))
 TESTS = test_router
@@ -85,7 +85,7 @@ test-docker-linux-arm64:
 	@echo "]" >> $@
 
 format:
-	find ./test \( -name "*.c" -or -name "*.h" \) -exec clang-format -i {} \;
+	find ./src ./test \( -name "*.c" -or -name "*.h" \) -exec clang-format -i {} \;
 
 .PHONY: clean
 

@@ -1,6 +1,6 @@
+#include <string.h>
 
 #include "http.h"
-#include <string.h>
 
 HttpMethod str_to_http_method(const char* methodStr) {
     HttpMethod method;
@@ -22,11 +22,17 @@ HttpMethod str_to_http_method(const char* methodStr) {
 
 const char* http_method_to_str(HttpMethod method) {
     switch (method) {
-        case HTTP_METHOD_GET: return "GET";
-        case HTTP_METHOD_POST: return "POST";
-        case HTTP_METHOD_PUT: return "PUT";
-        case HTTP_METHOD_DELETE: return "DELETE";
-        case HTTP_METHOD_PATCH: return "PATCH";
-        default: return "INVALID";
+    case HTTP_METHOD_GET:
+        return "GET";
+    case HTTP_METHOD_POST:
+        return "POST";
+    case HTTP_METHOD_PUT:
+        return "PUT";
+    case HTTP_METHOD_DELETE:
+        return "DELETE";
+    case HTTP_METHOD_PATCH:
+        return "PATCH";
+    default:
+        return "INVALID";
     }
 }
