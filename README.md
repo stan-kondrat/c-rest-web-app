@@ -21,7 +21,7 @@ This project is being developed as a fun experiment in building a RESTful web ap
 brew install libuv libpq cmocka  
 
 # Ubuntu
-apt install libpq-dev libuv1-dev libcmocka-dev
+apt install pkg-config libpq-dev libuv1-dev libcmocka-dev
 
 # Windows Support?
 # Most likely not, I don’t have a Windows machine, but technically it’s possible.
@@ -71,6 +71,11 @@ make .vscode/compile_commands.json
 
 # Format code
 make format
+
+# Run tests in docker
+make test-docker
+make test-docker-linux-amd64
+make test-docker-linux-arm64
 ```
 
 

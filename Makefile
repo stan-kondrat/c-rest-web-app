@@ -2,30 +2,30 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g
 BUILDDIR = build
 
-SOURCES = foo database server router
+SOURCES = database server router foo
 LIBS_LOCAL = parson picohttpparser
-OBJECTS = $(addprefix build/, $(addsuffix .o, $(SOURCES))) $(addprefix build/, $(addsuffix .o, $(LIBS_LOCAL)))
+OBJECTS = $(addprefix build/, $(addsuffix .o, $(LIBS_LOCAL))) $(addprefix build/, $(addsuffix .o, $(SOURCES)))
+TESTS = test_router
+TEST_OBJECTS = $(addprefix build/, $(addsuffix .o, $(TESTS)))
 
 INCLUDES_LOCAL = -Ilibs/ -Ilibs/parson/ -Ilibs/picohttpparser/
 # Platform-specific flags for PostgreSQL library (libpq) and libuv
 ifeq ($(shell uname), Darwin) # MacOS
     INCLUDES = $(INCLUDES_LOCAL) -I/opt/homebrew/include
-    LDFLAGS = -L/opt/homebrew/lib  -lpq -luv
-	TEST_LDFLAGS = -lcmocka
+    LDFLAGS = -L/opt/homebrew/lib -lpq -luv
 else ifeq ($(shell uname), Linux) # Linux
-    INCLUDES = $(INCLUDES_LOCAL) \
-		-I/usr/include/postgresql \
-		-I/usr/include/libuv
-    LDFLAGS = -L/usr/lib -lpq -luv
-	TEST_LDFLAGS = -lcmocka
+    INCLUDES = $(INCLUDES_LOCAL) -I/usr/include -I/usr/include/uv -I/usr/include/postgresql 
+    LDFLAGS =  -lpq -luv
 else
     $(error Unsupported platform: $(shell uname))
 endif
 
+
 # Default target
 all: build/main
-run: build/main
-	./build/main
+
+foo:
+	ls /usr/lib/aarch64-linux-gnu/libpq*
 
 # Clean up build files
 clean:
@@ -46,25 +46,32 @@ build/%.o: src/%.c src/%.h | $(BUILDDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c src/$*.c -o $@
 
 # Link object files to create the final executable
-build/main: build/main.o $(OBJECTS) | $(BUILDDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(OBJECTS) build/main.o
+build/main: src/main.c $(OBJECTS) | $(BUILDDIR)
+	$(CC) $(CFLAGS) src/main.c $(OBJECTS) $(INCLUDES) $(LDFLAGS) -o $@
+
+run: build/main
+	./build/main
 
 # Tests
-
-build/test_router.o: test/test_router.c | $(BUILDDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c test/test_router.c -o $@
-
-build/test_all.o: test/test_all.c | $(BUILDDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c test/test_all.c -o $@
+build/%.o: test/%.c | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c test/$*.c -o $@
 
 # Link test object files to create the test executable
-build/test_all: build/test_all.o build/test_router.o $(OBJECTS) | $(BUILDDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) $(TEST_LDFLAGS) -o $@ $(OBJECTS) build/test_all.o
+build/test_all: test/test_all.c $(OBJECTS) ${TEST_OBJECTS} | $(BUILDDIR)
+	$(CC) $(CFLAGS) test/test_all.c $(OBJECTS) $(INCLUDES) $(LDFLAGS) -lcmocka -o $@
 
 # Run tests
 test: build/test_all
 	./build/test_all
 
+test-docker: 
+	docker build -t temp-image . && docker run --rm temp-image
+
+test-docker-linux-amd64: 
+	docker build --platform linux/amd64 -t temp-image . && docker run --platform linux/amd64 --rm temp-image
+
+test-docker-linux-arm64: 
+	docker build --platform linux/arm64 -t temp-image . && docker run --platform linux/arm64 --rm temp-image
 
 .vscode/compile_commands.json: Makefile
 	@echo "[" > $@
