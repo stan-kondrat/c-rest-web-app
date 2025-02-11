@@ -2,13 +2,13 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g
 BUILDDIR = build
 
-SOURCES = database server router foo
+SOURCES = database http router server foo app_users
 LIBS_LOCAL = parson picohttpparser
 OBJECTS = $(addprefix build/, $(addsuffix .o, $(LIBS_LOCAL))) $(addprefix build/, $(addsuffix .o, $(SOURCES)))
 TESTS = test_router
 TEST_OBJECTS = $(addprefix build/, $(addsuffix .o, $(TESTS)))
 
-INCLUDES_LOCAL = -Ilibs/ -Ilibs/parson/ -Ilibs/picohttpparser/
+INCLUDES_LOCAL = -Isrc/ -Ilibs/ -Ilibs/parson/ -Ilibs/picohttpparser/
 # Platform-specific flags for PostgreSQL library (libpq) and libuv
 ifeq ($(shell uname), Darwin) # MacOS
     INCLUDES = $(INCLUDES_LOCAL) -I/opt/homebrew/include

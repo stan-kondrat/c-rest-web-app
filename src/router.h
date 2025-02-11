@@ -1,19 +1,20 @@
 #ifndef ROUTER_H
 #define ROUTER_H
 
-#include "server.h"
+#include <stdbool.h>
+#include "http.h"
 
 typedef void (*RouterFunction)(Request* request, Response* response);
 
 typedef struct Router {
     HttpMethod method; 
-    const char* path;  
-    union {
-        RouterFunction func;  
-        struct Router* routes; 
-    };
+    const char* path;
+    RouterFunction function;  
+    struct Router* routers;   
+    bool end;
 } Router;
 
-int add(int a, int b);
+RouterFunction router_find(Router* routers, const char* methodStr, const char* path);
+void router_print(Router* routers, int level, const char* parent);
 
 #endif // ROUTER_H

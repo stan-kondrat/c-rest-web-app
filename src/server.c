@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <uv.h>
+#include "router.h"
 
 #define DEFAULT_PORT 8080
+
 #define RESPONSE "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nContent-Type: text/plain\r\n\r\nHello, World!"
 
 uv_loop_t *loop;
@@ -54,7 +56,8 @@ void on_new_connection(uv_stream_t *server, int status) {
     }
 }
 
-int server() {
+int server(Router* routers) {
+
     loop = uv_default_loop();
     
     uv_tcp_t server;

@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "ms-vscode.makefile-tools",
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "sonarsource.sonarlint-vscode"
+    ]
+}

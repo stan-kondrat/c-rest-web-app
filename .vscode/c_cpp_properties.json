@@ -5,6 +5,7 @@
             "includePath": [
                 "/opt/homebrew/opt/libpq/include",
                 "/opt/homebrew/opt/libuv/include",
+                "/opt/homebrew/include",
                 "${workspaceFolder}/**",
                 "${workspaceFolder}"
             ],
