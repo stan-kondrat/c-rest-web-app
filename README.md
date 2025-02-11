@@ -12,20 +12,22 @@ This project is being developed as a fun experiment in building a RESTful web ap
 - **Sockets**: [libuv](https://libuv.org/)
 - **PostgreSQL**: [libpq](https://www.postgresql.org/docs/current/libpq.html)
 - **JSON Parsing**: [parson](https://github.com/kgabis/parson)
+- **Unit Testing** : [cmocka](https://cmocka.org)
 
 ## Installation
 
-### MacOS
+```sh
+# MacOS
+brew install libuv libpq cmocka  
 
-```bash
-brew install libuv libpq
+# Ubuntu
+apt install libpq-dev libuv1-dev libcmocka-dev
+
+# Windows Support?
+# Most likely not, I don’t have a Windows machine, but technically it’s possible.
+
 ```
 
-### Ubuntu
-
-```bash
-apt install libpq-dev libuv1-dev
-```
 
 ### Submodules
 
@@ -36,8 +38,10 @@ git submodule update --init --recursive
 
 ## Build and Run
 
-```bash
+```sh
 make
+make clean
+make test
 make run
 ```
 
@@ -59,6 +63,17 @@ wrk -t4 -c100 -d30s http://127.0.0.1:8080
 ab -n 10000 -c 100 http://127.0.0.1:8080/
 ```
 
----
+## Developemnt 
 
-Feel free to give it a star, share your ideas, or open an issue!
+```sh
+# Generate `compile_commands.json`
+make .vscode/compile_commands.json
+
+# Format code
+make format
+```
+
+
+## Contributions
+
+Feel free to give it a star, share your ideas, or open an issue! But please, no pull requests, as this is an educational project and will likely be archived once it's completed.

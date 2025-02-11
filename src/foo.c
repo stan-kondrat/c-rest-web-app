@@ -1,8 +1,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "foo.h"
+#include "router.h"
 #include "parson/parson.h"
 #include "picohttpparser/picohttpparser.h"
+
+void foo_func1(Request* request, Response* response) {
+    printf("Function 1 - Request: %s, Response: %s\n", request->body, response->body);
+}
+
+// Реализация функции 2
+void foo_func2(Request* request, Response* response) {
+    printf("Function 2 - Request: %s, Response: %s\n", request->body, response->body);
+}
+
+// Реализация функции 3
+void foo_func3(Request* request, Response* response) {
+    printf("Function 3 - Request: %s, Response: %s\n", request->body, response->body);
+}
 
 void foo()
 {
