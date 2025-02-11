@@ -1,0 +1,6 @@
+[submodule "libs/parson"]
+	path = libs/parson
+	url = git@github.com:kgabis/parson.git
+[submodule "libs/picohttpparser"]
+	path = libs/picohttpparser
+	url = git@github.com:h2o/picohttpparser.git
