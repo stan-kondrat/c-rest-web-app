@@ -13,8 +13,8 @@
 #define DEFAULT_PORT 8080
 #define DEFAULT_BACKLOG 128
 
-#define RESPONSE                                                               \
-    "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nContent-Type: "                  \
+#define RESPONSE                                                                                   \
+    "HTTP/1.1 200 OK\r\nContent-Length: 13\r\nContent-Type: "                                      \
     "text/plain\r\n\r\nHello, World!"
 
 uv_loop_t* loop;
@@ -30,8 +30,7 @@ void on_close(uv_handle_t* handle) {
 
 void on_write(uv_write_t* req, int status) {
     if (status) {
-        log_message(LOG_ERROR, LOG_NETWORK, "Write error: %s\n",
-                    uv_strerror(status));
+        log_message(LOG_ERROR, LOG_NETWORK, "Write error: %s\n", uv_strerror(status));
     }
     uv_close((uv_handle_t*) req->handle, on_close);
     free(req);
@@ -50,8 +49,7 @@ void on_read(uv_stream_t* client, ssize_t nread, const uv_buf_t* buf) {
 
 void on_new_connection(uv_stream_t* server, int status) {
     if (status < 0) {
-        log_message(LOG_ERROR, LOG_NETWORK, "New connection error: %s\n",
-                    uv_strerror(status));
+        log_message(LOG_ERROR, LOG_NETWORK, "New connection error: %s\n", uv_strerror(status));
         return;
     }
 
@@ -77,16 +75,13 @@ int server(Router* routers) {
     uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &addr);
 
     uv_tcp_bind(&tcp_server, (const struct sockaddr*) &addr, 0);
-    int r = uv_listen((uv_stream_t*) &tcp_server, DEFAULT_BACKLOG,
-                      on_new_connection);
+    int r = uv_listen((uv_stream_t*) &tcp_server, DEFAULT_BACKLOG, on_new_connection);
     if (r) {
-        log_message(LOG_ERROR, LOG_NETWORK, "Listen error: %s\n",
-                    uv_strerror(r));
+        log_message(LOG_ERROR, LOG_NETWORK, "Listen error: %s\n", uv_strerror(r));
         return 1;
     }
 
-    log_message(LOG_INFO, LOG_NETWORK, "HTTP server running on port %d...\n",
-                DEFAULT_PORT);
+    log_message(LOG_INFO, LOG_NETWORK, "HTTP server running on port %d...\n", DEFAULT_PORT);
     uv_run(loop, UV_RUN_DEFAULT);
 
     return 0;

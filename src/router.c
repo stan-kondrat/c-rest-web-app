@@ -5,8 +5,7 @@
 
 #include "http.h"
 
-RouterFunction router_find(Router* routers, const char* methodStr,
-                           const char* path) {
+RouterFunction router_find(Router* routers, const char* methodStr, const char* path) {
     HttpMethod method = str_to_http_method(methodStr);
     if (method == HTTP_METHOD_INVALID) {
         return NULL;
@@ -19,8 +18,8 @@ RouterFunction router_find(Router* routers, const char* methodStr,
 
         if (routers[i].routers != NULL &&
             strncmp(path, routers[i].path, strlen(routers[i].path)) == 0) {
-            RouterFunction nestedFunc = router_find(
-                routers[i].routers, methodStr, path + strlen(routers[i].path));
+            RouterFunction nestedFunc =
+                router_find(routers[i].routers, methodStr, path + strlen(routers[i].path));
             if (nestedFunc != NULL) {
                 return nestedFunc;
             }
@@ -43,8 +42,7 @@ void router_print(Router* routers, int level, const char* parent) {
         if (routers[i].routers != NULL && routers[i].function != NULL) {
             has_middlware = "(middlware)";
         }
-        printf("%s: %s%s %s\n", method_str, parent, routers[i].path,
-               has_middlware);
+        printf("%s: %s%s %s\n", method_str, parent, routers[i].path, has_middlware);
         if (routers[i].routers != NULL) {
             router_print(routers[i].routers, level + 1, routers[i].path);
         }

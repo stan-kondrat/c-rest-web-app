@@ -5,13 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef enum {
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_WARNING,
-    LOG_ERROR,
-    LOG_FATAL
-} LogLevel;
+typedef enum { LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_FATAL } LogLevel;
 
 typedef enum {
     LOG_APP = 1 << 0,

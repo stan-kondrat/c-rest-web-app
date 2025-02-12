@@ -5,11 +5,11 @@ BasedOnStyle: LLVM
 
 # Indentation settings
 IndentWidth: 4
-TabWidth: 4             
-UseTab: Never           
+TabWidth: 4
+UseTab: Never
 
 # Formatting settings
-ColumnLimit: 80         
+ColumnLimit: 100
 AllowAllArgumentsOnNextLine: true
 AllowShortFunctionsOnASingleLine: None
 
@@ -19,4 +19,4 @@ SpacesInParentheses: false
 SpaceAfterCStyleCast: true
 
 # Code-specific settings
-PointerAlignment: Left    
+PointerAlignment: Left
