@@ -3,19 +3,19 @@
 #include "http.h"
 #include "router.h"
 
-void app_users_add(Request* request, Response* response) {
+void app_users_add(HttpRequest* request, HttpResponse* response) {
 }
 
-void app_users_list(Request* request, Response* response) {
+void app_users_list(HttpRequest* request, HttpResponse* response) {
 }
 
-void app_users_get(Request* request, Response* response) {
+void app_users_get(HttpRequest* request, HttpResponse* response) {
 }
 
-void app_users_update(Request* request, Response* response) {
+void app_users_update(HttpRequest* request, HttpResponse* response) {
 }
 
-void app_users_delete(Request* request, Response* response) {
+void app_users_delete(HttpRequest* request, HttpResponse* response) {
 }
 
 Router app_users_routes[] = {

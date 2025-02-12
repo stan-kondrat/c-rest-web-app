@@ -6,7 +6,7 @@
 #include "http.h"
 
 RouterFunction router_find(Router* routers, const char* methodStr, const char* path) {
-    HttpMethod method = str_to_http_method(methodStr);
+    HttpMethod method = str_to_http_method(methodStr, 0);
     if (method == HTTP_METHOD_INVALID) {
         return NULL;
     }

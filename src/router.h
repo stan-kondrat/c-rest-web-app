@@ -4,7 +4,7 @@
 #include "http.h"
 #include <stdbool.h>
 
-typedef void (*RouterFunction)(Request* request, Response* response);
+typedef void (*RouterFunction)(HttpRequest* request, HttpResponse* response);
 
 typedef struct Router {
     HttpMethod method;

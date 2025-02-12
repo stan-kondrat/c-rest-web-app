@@ -11,17 +11,17 @@ static void test_router_structure(void** state) __attribute__((unused));
 static void test_router_find(void** state) __attribute__((unused));
 static void test_router_middleware(void** state) __attribute__((unused));
 
-void test_router_func1(Request* request, Response* response) {
+void test_router_func1(HttpRequest* request, HttpResponse* response) {
     check_expected(request->body);
     check_expected(response->body);
 }
 
-void test_router_func2(Request* request, Response* response) {
+void test_router_func2(HttpRequest* request, HttpResponse* response) {
     check_expected(request->body);
     check_expected(response->body);
 }
 
-void test_router_func3(Request* request, Response* response) {
+void test_router_func3(HttpRequest* request, HttpResponse* response) {
     check_expected(request->body);
     check_expected(response->body);
 }

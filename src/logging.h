@@ -9,7 +9,7 @@ typedef enum { LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR, LOG_FATAL } LogLevel
 
 typedef enum {
     LOG_APP = 1 << 0,
-    LOG_NETWORK = 1 << 1,
+    LOG_SOCKET = 1 << 1,
     LOG_HTTP = 1 << 2,
     LOG_ROUTER = 1 << 3,
     LOG_DB = 1 << 4,
@@ -17,6 +17,13 @@ typedef enum {
 
 void log_set_enabled_features(unsigned int features);
 void log_set_level(LogLevel level);
+
 void log_message(LogLevel level, LogFeature feature, const char* format, ...);
+
+void log_debug(LogFeature feature, const char* format, ...);
+void log_info(LogFeature feature, const char* format, ...);
+void log_warn(LogFeature feature, const char* format, ...);
+void log_error(LogFeature feature, const char* format, ...);
+void log_fatal(LogFeature feature, const char* format, ...);
 
 #endif // LOGGING_H

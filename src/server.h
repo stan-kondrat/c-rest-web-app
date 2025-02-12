@@ -4,8 +4,14 @@
 #include "http.h"
 #include "router.h"
 
-int server(Router* routers);
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
-int server_interfaces_print();
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+int server(int port, Router* routers);
 
 #endif // SERVER_H
