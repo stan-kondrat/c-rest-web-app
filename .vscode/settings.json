@@ -1,4 +1,5 @@
 {
     "sonarlint.pathToCompileCommands": "${workspaceFolder}/.vscode/compile_commands.json",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "cmake.ignoreCMakeListsMissing": true
 }

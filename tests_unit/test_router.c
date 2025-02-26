@@ -34,7 +34,7 @@ static void test_router_structure(void** state) {
         {HTTP_METHOD_GET, "/index", .function = test_router_func1},
         {HTTP_METHOD_GET, "/items",
          .routers =
-             (Router[]){
+             (Router[]) {
                  {HTTP_METHOD_GET, "/list", .function = test_router_func2},
                  {HTTP_METHOD_POST, "/add", .function = test_router_func2},
                  {.end = true},
@@ -61,7 +61,7 @@ static void test_router_find(void** state) {
         {HTTP_METHOD_GET, "/index", .function = test_router_func1},
         {HTTP_METHOD_GET, "/items",
          .routers =
-             (Router[]){
+             (Router[]) {
                  {HTTP_METHOD_GET, "/list", .function = test_router_func2},
                  {HTTP_METHOD_POST, "/add", .function = test_router_func2},
                  {.end = true},
@@ -93,13 +93,13 @@ static void test_router_middleware(void** state) {
     Router routers[] = {
         {HTTP_METHOD_GET, "/parent", .function = test_router_func1,
          .routers =
-             (Router[]){
+             (Router[]) {
                  {HTTP_METHOD_GET, "/child", .function = test_router_func2},
                  {.end = true},
              }},
         {HTTP_METHOD_GET, "/a", .function = test_router_func1,
          .routers =
-             (Router[]){
+             (Router[]) {
                  {HTTP_METHOD_GET, "/b", .function = test_router_func2},
                  {HTTP_METHOD_GET, "/c", .function = test_router_func3},
                  {.end = true},

@@ -18,11 +18,14 @@
 // #define OVERWRITE_SUGGESTED_BUFFER_SIZE 64*1024
 // #define OVERWRITE_SUGGESTED_BUFFER_SIZE 10
 
-#define SOCKET_BACKLOG 128
+#define SOMAXCONN 1024
 
 #define MAX_HEADERS_COUNT 100
 #define MIN_BUFFER_HEADER_SIZE 1024
 #define MAX_BUFFER_HEADER_SIZE 64 * 1024
+
+#define MIN_BUFFER_BODY_SIZE 1024
+#define MAX_BUFFER_BODY_SIZE 64 * 1024
 
 typedef struct {
     uv_tcp_t tcp_handle;
@@ -31,6 +34,11 @@ typedef struct {
     size_t request_header_buf_end;
     size_t request_header_buf_size;
     size_t request_header_len;
+
+    char* request_body_buf;
+    size_t request_body_buf_end;
+    size_t request_body_buf_size;
+    size_t request_body_len;
 
     HttpRequest request;
     HttpResponse response;
@@ -46,11 +54,103 @@ void on_close(uv_handle_t* handle) {
     if (client->request_header_buf) {
         free(client->request_header_buf); // alloc and realloc in on_header_read()
     }
+    if (client->request_body_buf) {
+        free(client->request_body_buf); // alloc and realloc in on_body_read()
+    }
     if (client->request.headers) {
         free(client->request.headers); // alloc on_header_parse()
     }
 
     free(client); // alloc in on_connect()
+}
+
+void on_write_end(uv_write_t* req, int status) {
+    if (status < 0) {
+        log_error(LOG_SOCKET, "Write error: %s\n", uv_strerror(status));
+    }
+    free(req->data);
+    free(req);
+}
+
+void on_response(client_t* client) {
+    const char* response = "HTTP/1.1 200 OK\r\n"
+                           "Content-Length: 13\r\n"
+                           "Content-Type: text/plain\r\n"
+                           "\r\n"
+                           "Hello, world";
+
+    uv_write_t* write_req = (uv_write_t*) malloc(sizeof(uv_write_t));
+    uv_buf_t resbuf = uv_buf_init(strdup(response), strlen(response));
+
+    write_req->data = resbuf.base;
+    uv_write(write_req, client, &resbuf, 1, on_write_end);
+}
+
+int on_body_read(client_t* client, const char* data, const size_t data_len) {
+    if (!client || !data || data_len == 0) {
+        log_error(LOG_SOCKET, "on_body_read: Invalid parameters passed to on_body_read\n");
+        return -1;
+    }
+    log_debug(LOG_SOCKET, "on_body_read: data_len = %zu, \n ", data_len);
+    log_debug(LOG_SOCKET, "on_body_read: received:\n%.*s", (int) data_len, data);
+
+    if (!client->request_body_buf) {
+        // Allocate initial buffer
+        size_t alloc_size = MIN(data_len, MAX_BUFFER_BODY_SIZE);
+        client->request_body_buf = (char*) malloc(alloc_size); // free in on_close()
+        if (!client->request_body_buf) {
+            log_warn(LOG_SOCKET, "on_body_read: Failed to allocate memory "
+                                 "for request body buffer\n");
+            return -1;
+        }
+        log_debug(LOG_SOCKET, "on_body_read: allocate %zu\n", alloc_size);
+        memcpy(client->request_body_buf, data, alloc_size);
+        client->request_body_buf_size = alloc_size;
+        client->request_body_buf_end = alloc_size;
+        return 0;
+    }
+
+    // Calculate required space and cap it at MAX_BUFFER_BODY_SIZE
+    size_t required_size = client->request_body_buf_end + data_len;
+    required_size = MIN(required_size, MAX_BUFFER_BODY_SIZE);
+
+    if (required_size > client->request_body_buf_size) {
+        // Determine new buffer size (double current size but not beyond
+        // MAX_BUFFER_BODY_SIZE)
+        size_t new_size = MAX(required_size, client->request_body_buf_size * 2);
+
+        // Ensure we do not exceed MAX_BUFFER_BODY_SIZE
+        new_size = MIN(new_size, MAX_BUFFER_BODY_SIZE);
+
+        char* new_buf = (char*) realloc(client->request_body_buf,
+                                        new_size); // free in on_close()
+        if (!new_buf) {
+            log_warn(LOG_SOCKET, "on_body_read: Failed to allocate memory "
+                                 "for request body buffer\n");
+            return -1;
+        }
+
+        log_debug(LOG_SOCKET, "on_body_read: realloc %zu\n", new_size);
+
+        client->request_body_buf = new_buf;
+        client->request_body_buf_size = new_size;
+    }
+
+    size_t remaining_space = client->request_body_buf_size - client->request_body_buf_end;
+    size_t append_len = MIN(data_len, remaining_space);
+
+    // Append the data
+    memcpy(client->request_body_buf + client->request_body_buf_end, data, append_len);
+    client->request_body_buf_end += append_len;
+
+    if (append_len < data_len) {
+        log_warn(LOG_SOCKET,
+                 "on_body_read: Not all data fit into the buffer. %zu bytes "
+                 "remaining.\n",
+                 data_len - append_len);
+    }
+
+    return 0;
 }
 
 int on_header_parse(client_t* client, size_t last_request_header_buf_size) {
@@ -104,16 +204,18 @@ int on_header_parse(client_t* client, size_t last_request_header_buf_size) {
     client->request.headers_cnt = num_headers;
     memcpy(client->request.headers, headers, num_headers * sizeof(struct phr_header));
 
+    int content_length = request_content_length(&client->request);
+    client->request_body_len = content_length;
+
     // if (buflen == sizeof(buf))
     //     return RequestIsTooLongError;
 
-    printf("request is %d bytes long", ret);
-    printf("method is %.*s", (int) method_len, method);
-    printf("path is %.*s", (int) path_len, path);
-    printf("HTTP version is 1.%d", minor_version);
+    printf("%.*s %.*s HTTP 1.%d (%db, %d)\n\n", (int) method_len, method, (int) path_len, path,
+           minor_version, ret, content_length);
     print_request_headers(&client->request);
+    printf("\n<<<--->>>\n");
 
-    return 0;
+    return ret;
 }
 
 int on_header_read(client_t* client, const char* data, const size_t data_len) {
@@ -183,36 +285,72 @@ int on_header_read(client_t* client, const char* data, const size_t data_len) {
     return 0;
 }
 
-void on_tcp_parse(client_t* client, ssize_t nread, const uv_buf_t* buf) {
-    if (client->request.headers != NULL) {
-        uv_read_stop((uv_stream_t*) &client->tcp_handle);
-        return;
+/**
+ * @return
+ *   - `1` on finish parsing
+ *   - `0` on continue
+ *   - `-1` on failure
+ */
+int on_tcp_parse(client_t* client, ssize_t nread, const uv_buf_t* buf) {
+    int parsed_pos = 0;
+    // Headers
+    if (!client->request.headers) {
+        // read headers
+        size_t last_request_header_buf_end = client->request_header_buf_end;
+        int rret = on_header_read(client, buf->base, nread);
+        if (rret == -1) {
+            return -1;
+        }
+
+        // parse headers
+        int header_length = on_header_parse(client, last_request_header_buf_end);
+        if (header_length == -1) {
+            return -1;
+        } else if (header_length == -2) {
+            // continue header parse on next read
+            return 0;
+        } else {
+            // success parse headers
+            log_debug(LOG_SOCKET, "on_tcp_parse: success parse headers, headers length %d",
+                      header_length);
+
+            parsed_pos = header_length - last_request_header_buf_end;
+            log_debug(LOG_SOCKET, "on_tcp_parse: nread = %zd, current parsed position = %d", nread,
+                      parsed_pos);
+        }
     }
 
-    // read headers
-    size_t last_request_header_buf_end = client->request_header_buf_end;
-    int rret = on_header_read(client, buf->base, nread);
-    if (rret == -1) {
-        uv_close((uv_handle_t*) &client->tcp_handle, on_close);
-        return;
-    }
+    // Body
+    if (client->request_body_len && client->request_body_len != client->request.body_len) {
 
-    // parse headers
-    int pret = on_header_parse(client, last_request_header_buf_end);
-    if (pret == -1) {
-        uv_close((uv_handle_t*) &client->tcp_handle, on_close);
-        return;
-    } else if (pret == -2) {
-        // continue header parse on next read
-        return;
+        log_debug(LOG_SOCKET, "on_tcp_parse: read body");
+
+        // read body
+        int rret = on_body_read(client, buf->base + parsed_pos, nread - parsed_pos);
+        if (rret == -1) {
+            return -1;
+        }
+
+        log_debug(LOG_SOCKET, "on_tcp_parse: read body %d/%d", client->request_body_buf_end,
+                  client->request_body_len);
+
+        if (client->request_body_buf_end == client->request_body_len) {
+            // end read body with Header->Content-Length size
+            client->request.body_len = client->request_body_len;
+            client->request.body = client->request_body_buf;
+            log_debug(LOG_SOCKET, "on_tcp_parse: body read success:\n%.*s",
+                      client->request.body_len, client->request.body);
+        } else {
+            // continue body read on next tcp read
+            return 0;
+        }
     }
-    // success parse headers
-    log_debug(LOG_SOCKET, "on_tcp_parse: success parse headers");
-    uv_read_stop((uv_stream_t*) &client->tcp_handle);
+    // uv_read_stop((uv_stream_t*) &client->tcp_handle);
+    return 1;
 }
 
 void on_tcp_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
-    log_debug(LOG_SOCKET, "on_tcp_read: Callback for when data is read, nread = %ld", nread);
+    log_debug(LOG_SOCKET, "on_tcp_read: Callback for when data is read, nread = %zd", nread);
 
     if (nread < 0) {
         if (nread == UV_EOF) {
@@ -223,7 +361,20 @@ void on_tcp_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
         uv_close((uv_handle_t*) stream, on_close);
     } else if (nread > 0) {
         client_t* client = (client_t*) stream;
-        on_tcp_parse(client, nread, buf);
+        int ret = on_tcp_parse(client, nread, buf);
+        if (ret == 0) {
+            // continue tcp read for parsing request
+        } else if (ret == -1) {
+            // error
+            uv_close((uv_handle_t*) &client->tcp_handle, on_close);
+        } else if (ret == 1) {
+            // request parsing finished
+            log_debug(LOG_SOCKET, "on_tcp_read: request done");
+
+            on_response(client);
+
+            uv_close((uv_handle_t*) &client->tcp_handle, on_close);
+        }
     }
 
     if (buf->base) {
@@ -266,6 +417,7 @@ void on_connect(uv_stream_t* server, int status) {
     client->request_header_buf_size = 0;
     client->request_header_buf_end = 0;
     client->request_header_len = 0;
+    client->request = (HttpRequest) {0};
 
     uv_tcp_init(loop, tcp_client);
 
@@ -288,7 +440,7 @@ int server(int port, Router* routers) {
     uv_ip4_addr("0.0.0.0", port, &addr);
 
     uv_tcp_bind(&tcp_server, (const struct sockaddr*) &addr, 0);
-    int ret = uv_listen((uv_stream_t*) &tcp_server, SOCKET_BACKLOG, on_connect);
+    int ret = uv_listen((uv_stream_t*) &tcp_server, SOMAXCONN, on_connect);
     if (ret) {
         log_message(LOG_ERROR, LOG_SOCKET, "Listen error: %s\n", uv_strerror(ret));
         return 1;

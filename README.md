@@ -18,6 +18,15 @@ This project is being developed as a fun experiment in building a RESTful web ap
 - Benchmarks, Docker scratch image, gihub actions ..
  
 
+## Not Planned
+The web server will **NOT** handle the following tasks (delegated to HAProxy/Traefik/Nginx):
+
+- SSL/TLS Termination
+- Static Content Serving and Caching
+- Traffic Compression (Gzip/Brotli)
+- Load Balancing
+- Rate Limiting
+
 ## Dependencies
 
 - **HTTP Parser**: [picohttpparser](https://github.com/h2o/picohttpparser)

@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "http.h"
+#include "logging.h"
 
 HttpMethod str_to_http_method(const char* str, const int str_len) {
     HttpMethod http_method = HTTP_METHOD_INVALID;
@@ -49,4 +51,44 @@ void print_request_headers(const HttpRequest* req) {
         printf("%.*s: %.*s\n", (int) req->headers[i].name_len, req->headers[i].name,
                (int) req->headers[i].value_len, req->headers[i].value);
     }
+}
+
+long strtol_safe(const char* value, size_t value_len) {
+    if (value == NULL || value_len == 0) {
+        return 0;
+    }
+
+    char* temp = (char*) malloc(value_len + 1);
+    if (temp == NULL) {
+        return 0;
+    }
+
+    memcpy(temp, value, value_len);
+    temp[value_len] = '\0';
+
+    char* endptr;
+    long result = strtol(temp, &endptr, 10);
+
+    free(temp);
+
+    return result;
+}
+
+int request_content_length(const HttpRequest* req) {
+    if (!req || !req->headers || req->headers_cnt == 0) {
+        log_warn(LOG_HTTP, "request_content_length: No headers");
+        return 0;
+    }
+
+    char name[] = "Content-Length";
+    int name_len = sizeof(name) - 1;
+
+    for (size_t i = 0; i < req->headers_cnt; ++i) {
+        if (req->headers[i].name_len == name_len &&
+            strncasecmp(req->headers[i].name, name, name_len) == 0) {
+            long content_length = strtol_safe(req->headers[i].value, req->headers[i].value_len);
+            return content_length;
+        }
+    }
+    return 0;
 }

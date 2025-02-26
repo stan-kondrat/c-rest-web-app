@@ -53,16 +53,21 @@ run: build/main
 	./build/main
 
 # Tests
-build/%.o: test/%.c | $(BUILDDIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c test/$*.c -o $@
+build/%.o: tests_unit/%.c | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c tests_unit/$*.c -o $@
 
 # Link test object files to create the test executable
-build/test_all: test/test_all.c $(OBJECTS) ${TEST_OBJECTS} | $(BUILDDIR)
-	$(CC) $(CFLAGS) test/test_all.c $(OBJECTS) $(INCLUDES) $(LDFLAGS) -lcmocka -o $@
+build/test_all: tests_unit/test_all.c $(OBJECTS) ${TEST_OBJECTS} | $(BUILDDIR)
+	$(CC) $(CFLAGS) tests_unit/test_all.c $(OBJECTS) $(INCLUDES) $(LDFLAGS) -lcmocka -o $@
 
 # Run tests
-test: build/test_all
-	./build/test_all
+test-unit: build/test_all
+	./build/test_all 
+
+test-integration: build/main tests_integration/test_suite.sh
+	./tests_integration/test_suite.sh
+
+test: test-unit test-integration
 
 test-docker: 
 	docker build -t temp-image . && docker run --rm temp-image

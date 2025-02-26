@@ -6,8 +6,8 @@
 #include "server.h"
 
 void index_page(HttpRequest* request, HttpResponse* response) {
-    // check_expected(request->body);
-    // check_expected(response->body);
+    (void) request;
+    (void) response;
 }
 
 int main() {

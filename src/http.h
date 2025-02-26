@@ -47,5 +47,6 @@ HttpMethod str_to_http_method(const char* str, const int str_len);
 const char* http_method_to_str(HttpMethod method);
 
 void print_request_headers(const HttpRequest* req);
+int request_content_length(const HttpRequest* req);
 
 #endif // HTTP_H

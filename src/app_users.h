@@ -3,6 +3,6 @@
 
 #include "router.h"
 
-Router app_users_routes[];
+extern Router app_users_routes[];
 
 #endif // APP_USERS_H
