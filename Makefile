@@ -5,7 +5,7 @@ BUILDDIR = build
 SOURCES = logging database http router server app_users
 LIBS_LOCAL = parson picohttpparser
 OBJECTS = $(addprefix build/, $(addsuffix .o, $(LIBS_LOCAL))) $(addprefix build/, $(addsuffix .o, $(SOURCES)))
-TESTS = test_router
+TESTS = test_router test_server
 TEST_OBJECTS = $(addprefix build/, $(addsuffix .o, $(TESTS)))
 
 INCLUDES_LOCAL = -Isrc/ -Ilibs/ -Ilibs/parson/ -Ilibs/picohttpparser/

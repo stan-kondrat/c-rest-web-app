@@ -27,23 +27,6 @@
 #define MIN_BUFFER_BODY_SIZE 1024
 #define MAX_BUFFER_BODY_SIZE 64 * 1024
 
-typedef struct {
-    uv_tcp_t tcp_handle;
-
-    char* request_header_buf;
-    size_t request_header_buf_end;
-    size_t request_header_buf_size;
-    size_t request_header_len;
-
-    char* request_body_buf;
-    size_t request_body_buf_end;
-    size_t request_body_buf_size;
-    size_t request_body_len;
-
-    HttpRequest request;
-    HttpResponse response;
-} client_t;
-
 uv_loop_t* loop;
 
 void on_close(uv_handle_t* handle) {

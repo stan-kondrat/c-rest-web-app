@@ -9,7 +9,8 @@
 
 static void test_router_structure(void** state) __attribute__((unused));
 static void test_router_find(void** state) __attribute__((unused));
-static void test_router_middleware(void** state) __attribute__((unused));
+static void test_router_find_nested(void** state) __attribute__((unused));
+static void test_router_not_found(void** state) __attribute__((unused));
 
 void test_router_func1(HttpRequest* request, HttpResponse* response) {
     check_expected(request->body);
@@ -86,7 +87,7 @@ static void test_router_find(void** state) {
     assert_ptr_equal(found_nested, test_router_func2);
 }
 
-static void test_router_middleware(void** state) {
+static void test_router_find_nested(void** state) {
     (void) state;
 
     // GIVEN
@@ -112,4 +113,20 @@ static void test_router_middleware(void** state) {
 
     // THEN
     assert_ptr_equal(func, test_router_func3);
+}
+
+static void test_router_not_found(void** state) {
+    (void) state;
+
+    // GIVEN
+    Router routers[] = {
+        {HTTP_METHOD_GET, "/", .function = test_router_func1},
+        {.end = true},
+    };
+
+    // WHEN
+    RouterFunction func = router_find(routers, "GET", "/not-exist");
+
+    // THEN
+    assert_ptr_equal(func, NULL);
 }
