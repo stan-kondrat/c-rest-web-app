@@ -5,7 +5,7 @@ BUILDDIR = build
 SOURCES = logging database http router server app_users
 LIBS_LOCAL = parson picohttpparser
 OBJECTS = $(addprefix build/, $(addsuffix .o, $(LIBS_LOCAL))) $(addprefix build/, $(addsuffix .o, $(SOURCES)))
-TESTS = test_router test_server
+TESTS = test_router test_server test_app
 TEST_OBJECTS = $(addprefix build/, $(addsuffix .o, $(TESTS)))
 
 INCLUDES_LOCAL = -Isrc/ -Ilibs/ -Ilibs/parson/ -Ilibs/picohttpparser/
@@ -90,7 +90,7 @@ test-docker-linux-arm64:
 	@echo "]" >> $@
 
 format:
-	find ./src ./test \( -name "*.c" -or -name "*.h" \) -exec clang-format -i {} \;
+	find ./src ./tests_unit ./tests_integration \( -name "*.c" -or -name "*.h" \) -exec clang-format -i {} \;
 
 .PHONY: clean
 

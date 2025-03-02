@@ -2,6 +2,7 @@
 // dd if=/dev/urandom bs=4k count=10 | curl -X POST -d @- http://localhost:8080
 // curl -d "key1=value1&key2=value2&key3=value3" -X POST http://localhost:8080
 // curl -d "text" -X GET http://localhost:8080
+// curl --trace-ascii -  http://localhost:8080
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +19,7 @@
 // #define OVERWRITE_SUGGESTED_BUFFER_SIZE 64*1024
 // #define OVERWRITE_SUGGESTED_BUFFER_SIZE 10
 
-#define SOMAXCONN 1024
+#define SOCKET_BACKLOG 1024
 
 #define MAX_HEADERS_COUNT 100
 #define MIN_BUFFER_HEADER_SIZE 1024
@@ -56,14 +57,39 @@ void on_write_end(uv_write_t* req, int status) {
 }
 
 void on_response(client_t* client) {
-    const char* response = "HTTP/1.1 200 OK\r\n"
-                           "Content-Length: 13\r\n"
-                           "Content-Type: text/plain\r\n"
-                           "\r\n"
-                           "Hello, world";
+    log_debug(LOG_SOCKET, "on_response: \n");
+    RouterFunction route_function =
+        router_find(client->routers, client->request.method, client->request.method_len,
+                    client->request.path, client->request.path_len);
+    if (route_function == NULL) {
+        // TODO: default unhandled
+        const char* response = "HTTP/1.1 200 OK\r\n"
+                               "Content-Length: 13\r\n"
+                               "Content-Type: text/plain\r\n"
+                               "\r\n"
+                               "Hello, world";
+
+        uv_write_t* write_req = (uv_write_t*) malloc(sizeof(uv_write_t));
+        uv_buf_t resbuf = uv_buf_init(strdup(response), strlen(response));
+
+        write_req->data = resbuf.base;
+        uv_write(write_req, client, &resbuf, 1, on_write_end);
+        return;
+    }
+
+    log_debug(LOG_SOCKET, "on_response: route_function %zu\n", (int) route_function);
+    route_function(&client->request, &client->response);
+
+    char* out_buffer = NULL;
+    size_t out_buffer_len = 0;
+    int result = create_http_response_buffer(&client->response, &out_buffer, &out_buffer_len);
+
+    if (result != 0) {
+        //
+    }
 
     uv_write_t* write_req = (uv_write_t*) malloc(sizeof(uv_write_t));
-    uv_buf_t resbuf = uv_buf_init(strdup(response), strlen(response));
+    uv_buf_t resbuf = uv_buf_init(out_buffer, out_buffer_len);
 
     write_req->data = resbuf.base;
     uv_write(write_req, client, &resbuf, 1, on_write_end);
@@ -174,7 +200,9 @@ int on_header_parse(client_t* client, size_t last_request_header_buf_size) {
 
     // Fill HttpRequest
     client->request.tcp_handle = &client->tcp_handle;
-    client->request.method = str_to_http_method(method, (int) method_len);
+    // client->request.method = str_to_http_method(method, (int) method_len);
+    client->request.method = method;
+    client->request.method_len = method_len;
     client->request.path = path;
     client->request.path_len = path_len;
     client->request.http_version = minor_version;
@@ -193,10 +221,10 @@ int on_header_parse(client_t* client, size_t last_request_header_buf_size) {
     // if (buflen == sizeof(buf))
     //     return RequestIsTooLongError;
 
-    printf("%.*s %.*s HTTP 1.%d (%db, %d)\n\n", (int) method_len, method, (int) path_len, path,
-           minor_version, ret, content_length);
+    log_debug(LOG_HTTP, "%.*s %.*s HTTP 1.%d (%db, %d)\n\n", (int) method_len, method,
+              (int) path_len, path, minor_version, ret, content_length);
     print_request_headers(&client->request);
-    printf("\n<<<--->>>\n");
+    log_debug(LOG_HTTP, "\n<<<--->>>\n");
 
     return ret;
 }
@@ -345,6 +373,7 @@ void on_tcp_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     } else if (nread > 0) {
         client_t* client = (client_t*) stream;
         int ret = on_tcp_parse(client, nread, buf);
+        log_debug(LOG_SOCKET, "on_tcp_parse: return = %d", ret);
         if (ret == 0) {
             // continue tcp read for parsing request
         } else if (ret == -1) {
@@ -389,18 +418,20 @@ void on_connect(uv_stream_t* server, int status) {
         return;
     }
 
+    Router* routers = (Router*) uv_handle_get_data((uv_handle_t*) server);
+
     client_t* client = (client_t*) malloc(sizeof(client_t)); // free in on_close()
     if (client == NULL) {
         log_warn(LOG_SOCKET, "on_connect: Failed to allocate memory for new client");
         return;
     }
     uv_tcp_t* tcp_client = &client->tcp_handle;
-
+    client->routers = routers;
     client->request_header_buf = NULL;
     client->request_header_buf_size = 0;
     client->request_header_buf_end = 0;
     client->request_header_len = 0;
-    client->request = (HttpRequest) {0};
+    client->request = (HttpRequest){0};
 
     uv_tcp_init(loop, tcp_client);
 
@@ -419,11 +450,13 @@ int server(int port, Router* routers) {
     uv_tcp_t tcp_server;
     uv_tcp_init(loop, &tcp_server);
 
+    uv_handle_set_data((uv_handle_t*) &tcp_server, routers);
+
     struct sockaddr_in addr;
     uv_ip4_addr("0.0.0.0", port, &addr);
 
     uv_tcp_bind(&tcp_server, (const struct sockaddr*) &addr, 0);
-    int ret = uv_listen((uv_stream_t*) &tcp_server, SOMAXCONN, on_connect);
+    int ret = uv_listen((uv_stream_t*) &tcp_server, SOCKET_BACKLOG, on_connect);
     if (ret) {
         log_message(LOG_ERROR, LOG_SOCKET, "Listen error: %s\n", uv_strerror(ret));
         return 1;

@@ -14,6 +14,7 @@
 
 typedef struct {
     uv_tcp_t tcp_handle;
+    Router* routers;
 
     char* request_header_buf;
     size_t request_header_buf_end;
@@ -32,5 +33,6 @@ typedef struct {
 int server(int port, Router* routers);
 
 int on_tcp_parse(client_t* client, ssize_t nread, const uv_buf_t* buf);
+void on_response(client_t* client);
 
 #endif // SERVER_H

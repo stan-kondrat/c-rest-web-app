@@ -51,7 +51,7 @@ run_test "GET" "http://localhost:8080/" "" 200 "" "Homepage should return 200"
 # run_test "GET" "http://localhost:8080/protected" "" 401 "" "Unauthorized access should return 401"
 
 # # Define POST test cases
-# run_test "POST" "http://localhost:8080/echo" 'hello' 200 "hello" "Echo should return same message"
+run_test "POST" "http://localhost:8080/echo" 'hello' 200 "hello" "Echo should return same message"
 # run_test "POST" "http://localhost:8080/api/create" '{"name":"test"}' 201 "{"id":1,"name":"test"}" "Create endpoint should return 201 with created object"
 
 # Stop the server

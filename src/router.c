@@ -4,28 +4,47 @@
 #include "router.h"
 
 #include "http.h"
+#include "logging.h"
 
-RouterFunction router_find(Router* routers, const char* methodStr, const char* path) {
-    HttpMethod method = str_to_http_method(methodStr, 0);
-    if (method == HTTP_METHOD_INVALID) {
+RouterFunction router_find(Router* routers, char* method, size_t method_len, char* path,
+                           size_t path_len) {
+
+    log_debug(LOG_ROUTER, "--router_find--:\n");
+    log_debug(LOG_ROUTER, "method %.*s", (int) method_len, method);
+    log_debug(LOG_ROUTER, "path %.*s (%d)", (int) path_len, path, path_len);
+
+    HttpMethod http_method = str_to_http_method(method, method_len);
+    if (http_method == HTTP_METHOD_INVALID) {
+        log_debug(LOG_ROUTER, "router_find: HTTP_METHOD_INVALID = %.*s", (int) method_len, method);
         return NULL;
     }
 
     for (int i = 0; !routers[i].end; ++i) {
-        if (routers[i].method == method && strcmp(routers[i].path, path) == 0) {
+        char* route_path = (char*) routers[i].path;
+        size_t route_path_len = strlen(route_path);
+        log_debug(LOG_ROUTER, "check %.*s", (int) route_path_len, route_path);
+
+        if (routers[i].method == http_method && path_len == route_path_len &&
+            memcmp(route_path, path, path_len) == 0) {
+            log_debug(LOG_ROUTER, "router_find: found direct %zu\n", routers[i].function);
             return routers[i].function;
         }
 
-        if (routers[i].routers != NULL &&
-            strncmp(path, routers[i].path, strlen(routers[i].path)) == 0) {
-            RouterFunction nestedFunc =
-                router_find(routers[i].routers, methodStr, path + strlen(routers[i].path));
+        // Check for nested routers
+        if (routers[i].routers != NULL && path_len >= route_path_len &&
+            memcmp(path, route_path, route_path_len) == 0) {
+            log_debug(LOG_ROUTER, "router_find: go nested");
+            size_t remaining_path_len = path_len - route_path_len;
+            RouterFunction nestedFunc = router_find(routers[i].routers, method, method_len,
+                                                    path + route_path_len, remaining_path_len);
             if (nestedFunc != NULL) {
+                log_debug(LOG_ROUTER, "router_find: found nested %zu\n", nestedFunc);
                 return nestedFunc;
             }
         }
     }
 
+    log_debug(LOG_ROUTER, "router_find: not found\n");
     return NULL;
 }
 

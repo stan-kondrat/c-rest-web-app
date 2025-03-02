@@ -14,7 +14,8 @@ typedef struct Router {
     bool end;
 } Router;
 
-RouterFunction router_find(Router* routers, const char* methodStr, const char* path);
+RouterFunction router_find(Router* routers, char* method, size_t method_len, char* path,
+                           size_t path_len);
 void router_print(Router* routers, int level, const char* parent);
 
 #endif // ROUTER_H

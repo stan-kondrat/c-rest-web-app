@@ -35,7 +35,7 @@ static void test_router_structure(void** state) {
         {HTTP_METHOD_GET, "/index", .function = test_router_func1},
         {HTTP_METHOD_GET, "/items",
          .routers =
-             (Router[]) {
+             (Router[]){
                  {HTTP_METHOD_GET, "/list", .function = test_router_func2},
                  {HTTP_METHOD_POST, "/add", .function = test_router_func2},
                  {.end = true},
@@ -62,7 +62,7 @@ static void test_router_find(void** state) {
         {HTTP_METHOD_GET, "/index", .function = test_router_func1},
         {HTTP_METHOD_GET, "/items",
          .routers =
-             (Router[]) {
+             (Router[]){
                  {HTTP_METHOD_GET, "/list", .function = test_router_func2},
                  {HTTP_METHOD_POST, "/add", .function = test_router_func2},
                  {.end = true},
@@ -71,10 +71,14 @@ static void test_router_find(void** state) {
     };
 
     // WHEN
-    RouterFunction not_found_path = router_find(routers, "GET", "/x");
-    RouterFunction wrong_method = router_find(routers, "POST", "/index");
-    RouterFunction found = router_find(routers, "GET", "/index");
-    RouterFunction found_nested = router_find(routers, "POST", "/items/add");
+    RouterFunction not_found_path =
+        router_find(routers, "GET", sizeof("GET") - 1, "/x", sizeof("/x") - 1);
+    RouterFunction wrong_method =
+        router_find(routers, "POST", sizeof("POST") - 1, "/index", sizeof("/index") - 1);
+    RouterFunction found =
+        router_find(routers, "GET", sizeof("GET") - 1, "/index", sizeof("/index") - 1);
+    RouterFunction found_nested =
+        router_find(routers, "POST", sizeof("POST") - 1, "/items/add", sizeof("/items/add") - 1);
 
     // THEN
     assert_null(not_found_path);
@@ -94,13 +98,13 @@ static void test_router_find_nested(void** state) {
     Router routers[] = {
         {HTTP_METHOD_GET, "/parent", .function = test_router_func1,
          .routers =
-             (Router[]) {
+             (Router[]){
                  {HTTP_METHOD_GET, "/child", .function = test_router_func2},
                  {.end = true},
              }},
         {HTTP_METHOD_GET, "/a", .function = test_router_func1,
          .routers =
-             (Router[]) {
+             (Router[]){
                  {HTTP_METHOD_GET, "/b", .function = test_router_func2},
                  {HTTP_METHOD_GET, "/c", .function = test_router_func3},
                  {.end = true},
@@ -109,7 +113,8 @@ static void test_router_find_nested(void** state) {
     };
 
     // WHEN
-    RouterFunction func = router_find(routers, "GET", "/a/c");
+    RouterFunction func =
+        router_find(routers, "GET", sizeof("GET") - 1, "/a/c", sizeof("/a/c") - 1);
 
     // THEN
     assert_ptr_equal(func, test_router_func3);
@@ -125,7 +130,8 @@ static void test_router_not_found(void** state) {
     };
 
     // WHEN
-    RouterFunction func = router_find(routers, "GET", "/not-exist");
+    RouterFunction func =
+        router_find(routers, "GET", sizeof("GET") - 1, "/not-exist", sizeof("/not-exist") - 1);
 
     // THEN
     assert_ptr_equal(func, NULL);
